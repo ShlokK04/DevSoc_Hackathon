@@ -11,3 +11,5 @@ BeReal x Houseparty:
 - New GC everyday, potential for happs and plans
 - Triangle graph analogy, all will be at uni that day
 - Can make plans to link
+
+- Will make chats weekly drops instead
