@@ -9,3 +9,5 @@ BeReal x Houseparty:
 
 - Or u get added to a GC every day with two random friends/mutals of yours. 
 - New GC everyday, potential for happs and plans
+- Triangle graph analogy, all will be at uni that day
+- Can make plans to link
