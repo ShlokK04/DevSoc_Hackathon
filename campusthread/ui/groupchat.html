@@ -196,204 +196,397 @@
 
 <div class="phone">
   <div class="notch"></div>
+  <div id="toast" class="hide"></div>
 
-  <!-- ============ SCREEN 1 — THE THREAD OPENED ============ -->
-  <section class="screen" id="s-notify">
+  <!-- ============ AUTH ============ -->
+  <section class="screen" id="s-auth">
     <div class="wrap">
-      <div class="kicker">Sunday · 7:00 pm</div>
-      <h1>A thread<br><em>just opened.</em></h1>
-      <p class="lede">Someone you both know thought you two should finally meet.</p>
+      <div class="kicker" id="apiMode">CampusThread</div>
+      <h1>Meet the people<br><em>you'd have missed.</em></h1>
+      <p class="lede">Warm intros through a mutual friend. No friends yet? You'll still be grouped — with others in the same boat.</p>
 
-      <div class="thread-stage">
-        <svg viewBox="0 0 352 236" preserveAspectRatio="none">
-          <path class="stitch" d="M176 44 C 120 96, 92 150, 70 188" />
-          <path class="stitch" d="M176 44 C 232 96, 260 150, 282 188" style="animation-delay:.55s"/>
-          <path class="stitch" d="M70 196 C 130 224, 222 224, 282 196" style="animation-delay:1.15s;opacity:.5"/>
-        </svg>
-        <div class="node a">JL<small>Jamie — knows you both</small></div>
-        <div class="node b">AN<small>Alex</small></div>
-        <div class="node c">SP<small>Sam (you)</small></div>
+      <div class="addcard" style="margin-top:26px">
+        <div class="addrow" style="display:block">
+          <input id="au-zid" class="fld" placeholder="zID (e.g. z5311111)">
+          <input id="au-name" class="fld hide" placeholder="Your name">
+          <input id="au-pw" class="fld" type="password" placeholder="Password (6+ chars)">
+          <input id="au-courses" class="fld hide" placeholder="Course codes — COMP1531 COMP2521">
+        </div>
       </div>
-
-      <div class="seal"><span class="dot"></span><span>Validated on campus together &nbsp;·&nbsp; Wed 27 May</span></div>
-
-      <button class="cta" onclick="go('chat')">Open the chat</button>
-      <button class="cta ghost" onclick="alert('Opted out — no thread for you next week. Toggle back anytime in Settings.')">Not on campus this week</button>
+      <button class="cta" id="au-submit" onclick="submitAuth()">Log in</button>
+      <button class="cta ghost" id="au-toggle" onclick="toggleAuth()">New here? Create an account</button>
     </div>
   </section>
 
-  <!-- ============ SCREEN 2 — THE GROUPCHAT ============ -->
+  <!-- ============ HOME ============ -->
+  <section class="screen hide" id="s-home">
+    <div class="wrap">
+      <div class="kicker" id="h-week">Home</div>
+      <h1 id="h-hi">Hi.</h1>
+      <p class="lede" id="h-sub"></p>
+      <div id="h-body"></div>
+      <button class="cta ghost" style="margin-top:30px" onclick="logout()">Log out</button>
+    </div>
+  </section>
+
+  <!-- ============ FRIENDS ============ -->
+  <section class="screen hide" id="s-friends">
+    <div class="chead">
+      <div class="row">
+        <button class="back" onclick="show('home')">‹ HOME</button>
+        <div class="title" style="margin:0">Your people</div>
+      </div>
+    </div>
+    <div class="wrap" style="padding-top:18px">
+      <input id="fr-search" class="fld" placeholder="Search by name or zID" oninput="renderFriends()">
+      <div id="fr-body"></div>
+    </div>
+  </section>
+
+  <!-- ============ GROUP CHAT ============ -->
   <section class="screen hide" id="s-chat">
     <div class="chead">
       <div class="row">
-        <button class="back" onclick="go('notify')">‹ THREAD</button>
-        <div class="avs">
-          <i style="background:linear-gradient(150deg,#ffe23d,#ffce00);color:#000">JL</i>
-          <i style="background:linear-gradient(150deg,#3a3a3a,#000)">AN</i>
-          <i style="background:linear-gradient(150deg,#8a8a8a,#555)">SP</i>
-        </div>
+        <button class="back" onclick="show('home')">‹ HOME</button>
+        <div class="avs" id="c-avs"></div>
       </div>
-      <div class="title">Jamie · Alex · you</div>
-      <div class="countdown"><span class="pulse"></span><span id="cd">expires Friday midnight</span></div>
+      <div class="title" id="c-title">Your thread</div>
+      <div class="countdown"><span class="pulse"></span><span id="cd">closes Friday midnight</span></div>
     </div>
-
-    <div class="feed" id="feed">
-      <div class="msg sys">
-        Hey — <b>Jamie</b> knows both of you. You're both in <b>Engineering</b>
-        and you're all on campus <b>Wednesday</b>. You've got until Friday —
-        maybe grab a coffee?
-      </div>
-      <div class="who">ALEX · NGUYEN</div>
-      <div class="msg them">oh hey! Jamie's mentioned you 😄 I'm free between classes Wed</div>
-    </div>
-
+    <div class="feed" id="feed"></div>
     <div class="windows">
-      <div class="wlabel">Three windows you're all free &amp; on campus</div>
+      <div class="wlabel">Windows you're all free &amp; on campus</div>
       <div id="tickets"></div>
     </div>
-
     <div class="metbar">
-      <button class="metbtn" onclick="go('met')">✓ &nbsp;We met</button>
+      <button class="metbtn" onclick="show('met')">✓ &nbsp;We met</button>
     </div>
-
     <div class="composer">
-      <input id="inp" placeholder="Message the thread…" onkeydown="if(event.key==='Enter')send()">
-      <button onclick="send()">↑</button>
+      <input id="inp" placeholder="Message the thread…" onkeydown="if(event.key==='Enter')sendMsg()">
+      <button onclick="sendMsg()">↑</button>
     </div>
   </section>
 
-  <!-- ============ SCREEN 3 — WE MET ============ -->
+  <!-- ============ WE MET ============ -->
   <section class="screen hide" id="s-met">
     <div class="met-wrap">
       <div class="check"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
       <h2>You actually met.</h2>
       <p>That's the whole point. Keep the people worth keeping.</p>
-
-      <div class="addcard">
-        <div class="addrow">
-          <div class="pf" style="background:linear-gradient(150deg,#ffe23d,#ffce00);color:#000">JL</div>
-          <div class="nm"><b>Jamie Lee</b><span>z5100001 · already friends</span></div>
-          <button class="tog on" disabled style="opacity:.5"></button>
-        </div>
-        <div class="addrow">
-          <div class="pf">AN</div>
-          <div class="nm"><b>Alex Nguyen</b><span>z5100002 · met just now</span></div>
-          <button class="tog on" onclick="this.classList.toggle('on')"></button>
-        </div>
-      </div>
+      <div class="addcard" id="m-people"></div>
       <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink-soft);margin:6px 4px 0;text-align:left">
-        Adding Alex feeds back into next week's match quality.
+        Adding people feeds back into next week's matching — and unlocks new intros for everyone.
       </div>
-
-      <button class="cta" style="animation:none;opacity:1;margin-top:24px" id="confirmMet" onclick="confirmMet()">Confirm — and see what changes</button>
-
-      <div id="loopPreview" class="hide" style="margin-top:24px;text-align:left">
-        <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ember-deep);margin:0 2px 12px">Next Sunday · the thread feeds back</div>
-        <div class="addcard" style="margin:0">
-          <div class="addrow"><div style="font-size:20px">✕</div>
-            <div class="nm"><b>You &amp; Alex won't be re-threaded</b>
-            <span>you've met — the loop is closed</span></div></div>
-          <div class="addrow"><div style="font-size:20px">✦</div>
-            <div class="nm"><b>Alex can now introduce you to Dev</b>
-            <span>a person you had no path to before</span></div></div>
-          <div class="addrow"><div style="font-size:20px">★</div>
-            <div class="nm"><b>Jamie is a proven matchmaker</b>
-            <span>1 successful intro — a tie-break nudge for future threads</span></div></div>
-        </div>
-      </div>
-
-      <button class="cta" style="animation:none;opacity:1;margin-top:14px;background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none" onclick="go('notify')">Back to threads</button>
-
+      <button class="cta" style="animation:none;opacity:1;margin-top:24px" id="confirmMet" onclick="confirmMet()">Confirm</button>
+      <div id="loopPreview" class="hide" style="margin-top:24px;text-align:left"></div>
+      <button class="cta" style="animation:none;opacity:1;margin-top:14px;background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none" onclick="show('home')">Back to home</button>
       <div class="closer">“One real meetup between two people who<br>would never have otherwise met.”</div>
     </div>
   </section>
 </div>
 
+<style>
+  .fld{width:100%;border:1px solid var(--line);background:#fff;border-radius:12px;
+    padding:13px 15px;font-family:"Inter",system-ui,sans-serif;font-size:15px;
+    color:var(--ink);outline:none;margin:6px 0}
+  .fld:focus{border-color:var(--ember)}
+  #toast{position:absolute;top:36px;left:50%;transform:translateX(-50%);z-index:50;
+    background:var(--ink);color:var(--paper);font-family:"Inter",sans-serif;
+    font-size:13px;padding:10px 16px;border-radius:999px;max-width:86%;text-align:center}
+  .pillbtn{border:1.5px solid var(--ink);background:var(--ember);color:var(--ink);
+    font-family:"Inter",sans-serif;font-weight:700;font-size:12px;border-radius:999px;
+    padding:8px 14px;cursor:pointer}
+  .pillbtn.ghost{background:transparent}
+  .pillbtn:disabled{opacity:.45;cursor:default}
+  .tag{font-family:"Inter",sans-serif;font-size:11px;color:var(--ink-soft)}
+</style>
+
 <script>
-  // Output of the matching + room-resolution pipeline (Jamie ▸ Alex ▸ Sam,
-  // week of Mon 25 May 2026). Mirrors demo.py exactly.
-  var WINDOWS = [
-    { when:"Wed · 11:00–12:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 },
-    { when:"Wed · 14:00–15:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 },
-    { when:"Wed · 17:00–18:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 }
-  ];
+"use strict";
+var S = null;            // last server state — the ONLY source of truth
+var authMode = "login";
+var pollTimer = null;
 
-  function go(id){
-    ['notify','chat','met'].forEach(function(s){
-      document.getElementById('s-'+s).classList.toggle('hide', s!==id);
+function toast(msg){
+  var t=document.getElementById('toast');
+  t.textContent=msg; t.classList.remove('hide');
+  clearTimeout(t._h); t._h=setTimeout(function(){t.classList.add('hide');},3200);
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){
+  return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function initials(n){ return (n||'?').split(/\s+/).map(function(w){return w[0];})
+  .join('').slice(0,2).toUpperCase(); }
+
+async function api(path, body){
+  var r = await fetch(path, {
+    method: body===undefined ? 'GET' : 'POST',
+    headers: body===undefined ? {} : {'Content-Type':'application/json'},
+    body: body===undefined ? undefined : JSON.stringify(body)
+  });
+  var d = {};
+  try { d = await r.json(); } catch(e){}
+  if(!r.ok){ throw new Error(d.error || ('Error '+r.status)); }
+  return d;
+}
+
+function show(view){
+  ['auth','home','friends','chat','met'].forEach(function(v){
+    document.getElementById('s-'+v).classList.toggle('hide', v!==view);
+  });
+  var sc=document.getElementById('s-'+view); if(sc) sc.scrollTop=0;
+  clearInterval(pollTimer);
+  if(view==='chat'){
+    pollTimer=setInterval(function(){ refresh(true); }, 4000);
+  }
+}
+
+/* ---------- auth ---------- */
+function toggleAuth(){
+  authMode = authMode==='login' ? 'register' : 'login';
+  var reg = authMode==='register';
+  document.getElementById('au-name').classList.toggle('hide', !reg);
+  document.getElementById('au-courses').classList.toggle('hide', !reg);
+  document.getElementById('au-submit').textContent = reg ? 'Create account' : 'Log in';
+  document.getElementById('au-toggle').textContent = reg
+    ? 'Have an account? Log in' : 'New here? Create an account';
+}
+async function submitAuth(){
+  var zid=document.getElementById('au-zid').value.trim();
+  var pw=document.getElementById('au-pw').value;
+  try{
+    if(authMode==='register'){
+      S = await api('/api/register', {
+        zid:zid, name:document.getElementById('au-name').value.trim(),
+        password:pw, courses:document.getElementById('au-courses').value });
+    } else {
+      S = await api('/api/login', {zid:zid, password:pw});
+    }
+    afterState();
+  }catch(e){ toast(e.message); }
+}
+async function logout(){
+  try{ await api('/api/logout', {}); }catch(e){}
+  S=null; clearInterval(pollTimer); show('auth');
+}
+
+/* ---------- state plumbing ---------- */
+async function refresh(silent){
+  try{
+    var d = await api('/api/state');
+    if(!d.user){ if(!silent) show('auth'); return; }
+    S=d;
+    if(!document.getElementById('s-chat').classList.contains('hide')) renderChat();
+    if(!document.getElementById('s-home').classList.contains('hide')) renderHome();
+    if(!document.getElementById('s-friends').classList.contains('hide')) renderFriends();
+  }catch(e){ if(!silent) toast(e.message); }
+}
+function afterState(){
+  document.getElementById('apiMode').textContent =
+    'CampusThread · DevSoc API: ' + (S.coursesApi||'');
+  renderHome(); show('home');
+}
+
+/* ---------- home ---------- */
+function renderHome(){
+  var u=S.user;
+  document.getElementById('h-week').textContent =
+    'Week of Mon '+S.week+'  ·  '+esc(u.zid);
+  document.getElementById('h-hi').innerHTML = 'Hi, <em>'+esc(u.name)+'</em>.';
+  var body=document.getElementById('h-body'), h='';
+
+  if(!u.hasTimetable){
+    document.getElementById('h-sub').textContent =
+      'First, add your timetable so we can find when you’re all on campus.';
+  } else if(S.thread){
+    document.getElementById('h-sub').textContent =
+      'Your group for this week is ready.';
+  } else if(S.sundayRun){
+    document.getElementById('h-sub').textContent =
+      'The Sunday run is done and you weren’t placed this time — you can still get a group now.';
+  } else {
+    document.getElementById('h-sub').textContent =
+      'Sunday 7pm hasn’t run yet. ' +
+      (u.friendCount? '' : 'You have no friends yet — you’ll be grouped with others who don’t either.');
+  }
+
+  /* timetable card */
+  h += card(
+    '<b>Timetable</b> <span class="tag">'+(u.hasTimetable?'loaded':'not set')+'</span>'+
+    '<input id="ics" type="file" accept=".ics" class="fld" style="padding:9px">'+
+    '<input id="crs" class="fld" placeholder="Course codes (optional) — COMP1531 ARTS1000">'+
+    '<button class="pillbtn" onclick="uploadIcs()">Save timetable</button>');
+
+  /* matching card */
+  if(S.thread){
+    h += card('<b>Your group chat is open.</b>'+
+      '<button class="pillbtn" style="margin-top:8px" onclick="show(\'chat\');renderChat()">Open the chat →</button>');
+  } else if(S.sundayRun || u.friendCount===0){
+    h += card('<b>Find a group now</b>'+
+      '<div class="tag" style="margin:6px 0">Matched only with others also waiting / without friends — still requires a shared on-campus day.</div>'+
+      (S.waiting? '<div class="tag">Waiting · '+S.poolSize+' in the pool. Keep this open.</div>' : '')+
+      '<button class="pillbtn" style="margin-top:8px" onclick="joinNow()">'+
+      (S.waiting?'Try matching again':'Find me a group now')+'</button>');
+  }
+  h += card('<b>Sunday 7pm run</b>'+
+    '<div class="tag" style="margin:6px 0">Simulate the weekly job: warm intros for everyone + a cold-start pass for friendless students.</div>'+
+    '<button class="pillbtn ghost" onclick="runSunday()">Run Sunday matching</button>');
+
+  /* friends card */
+  h += card('<b>Friends</b> <span class="tag">'+u.friendCount+
+    (S.incoming.length? ' · '+S.incoming.length+' request(s)':'')+'</span>'+
+    '<button class="pillbtn ghost" style="margin-top:8px" onclick="show(\'friends\');renderFriends()">Manage people →</button>');
+
+  body.innerHTML=h;
+}
+function card(inner){
+  return '<div class="addcard" style="padding:14px 16px;margin:14px 0 0;display:block">'+inner+'</div>';
+}
+
+async function uploadIcs(){
+  var f=document.getElementById('ics').files[0];
+  var crs=document.getElementById('crs').value.trim();
+  try{
+    if(crs){ S=await api('/api/courses',{courses:crs}); }
+    if(f){
+      var text=await f.text();
+      S=await api('/api/timetable',{ics:text});
+      toast(S.events+' classes loaded.');
+    } else if(!crs){ toast('Choose a .ics file first.'); return; }
+    renderHome();
+  }catch(e){ toast(e.message); }
+}
+async function runSunday(){
+  try{ var d=await api('/api/run-sunday',{});
+    S=d; toast('Sunday run: '+d.ran.warm+' warm + '+d.ran.open+' cold-start group(s).');
+    renderHome();
+  }catch(e){ toast(e.message); }
+}
+async function joinNow(){
+  try{ var d=await api('/api/join-now',{}); S=d;
+    if(d.join.matched){ toast('You’re in a group!'); renderChat(); show('chat'); }
+    else { toast('No match yet — '+d.join.waiting+' waiting. Try again shortly.'); renderHome(); }
+  }catch(e){ toast(e.message); }
+}
+
+/* ---------- friends ---------- */
+function renderFriends(){
+  var q=(document.getElementById('fr-search').value||'').toLowerCase();
+  function match(o){ return (o.name+' '+o.zid).toLowerCase().indexOf(q)>=0; }
+  var h='';
+  if(S.incoming.length){
+    h+='<div class="wlabel">Requests for you</div>';
+    S.incoming.filter(match).forEach(function(p){
+      h+=row(p,'<button class="pillbtn" onclick="respond(\''+p.zid+'\',true)">Accept</button>'+
+        ' <button class="pillbtn ghost" onclick="respond(\''+p.zid+'\',false)">Decline</button>');
     });
-    document.getElementById('s-'+id).scrollTop = 0;
   }
+  h+='<div class="wlabel">Friends · '+S.friends.length+'</div>';
+  h+= S.friends.length? '' : '<div class="tag" style="margin:0 6px 10px">None yet — that’s fine, the cold-start matcher has you covered.</div>';
+  S.friends.filter(match).forEach(function(p){ h+=row(p,'<span class="tag">friend</span>'); });
 
-  // render meetup "tickets"
-  function renderTickets(){
-    document.getElementById('tickets').innerHTML = WINDOWS.map(function(w,i){
-      return '<div class="ticket" onclick="suggest('+i+')">'+
-        '<div><div class="when">'+w.when+'</div>'+
-        '<div class="where">'+w.room+' · <b>'+w.bldg+'</b> · seats '+w.seats+
-        ' · ~'+w.dist+'m away</div></div>'+
-        '<div class="pick">Suggest</div></div>';
+  h+='<div class="wlabel">Everyone else</div>';
+  S.people.filter(match).forEach(function(p){
+    var b = p.status==='outgoing' ? '<button class="pillbtn" disabled>Requested</button>'
+      : p.status==='incoming' ? '<button class="pillbtn" onclick="respond(\''+p.zid+'\',true)">Accept</button>'
+      : '<button class="pillbtn" onclick="addFriend(\''+p.zid+'\')">Add</button>';
+    h+=row(p,b);
+  });
+  document.getElementById('fr-body').innerHTML=h;
+}
+function row(p,right){
+  return '<div class="addrow"><div class="pf">'+esc(initials(p.name))+'</div>'+
+    '<div class="nm"><b>'+esc(p.name)+'</b><span>'+esc(p.zid)+'</span></div>'+
+    '<div>'+right+'</div></div>';
+}
+async function addFriend(zid){
+  try{ S=await api('/api/friends/request',{zid:zid}); toast('Request sent.'); renderFriends(); }
+  catch(e){ toast(e.message); }
+}
+async function respond(zid,ok){
+  try{ S=await api('/api/friends/respond',{zid:zid,accept:ok});
+    toast(ok?'Friend added.':'Declined.'); renderFriends(); }
+  catch(e){ toast(e.message); }
+}
+
+/* ---------- chat ---------- */
+function renderChat(){
+  var t=S.thread;
+  if(!t){ toast('No thread yet.'); show('home'); return; }
+  var names=t.members.map(function(m){return m.name;});
+  document.getElementById('c-title').textContent = names.join(' · ');
+  var grad=['linear-gradient(150deg,#ffe23d,#ffce00)','linear-gradient(150deg,#3a3a3a,#000)','linear-gradient(150deg,#8a8a8a,#555)'];
+  document.getElementById('c-avs').innerHTML = t.members.map(function(m,i){
+    return '<i style="background:'+grad[i%3]+';color:'+(i?'#fff':'#000')+'">'+esc(initials(m.name))+'</i>';
+  }).join('');
+
+  var feed=document.getElementById('feed'), me=S.user.zid;
+  var h='<div class="msg sys">'+esc(t.icebreaker)+'</div>';
+  t.messages.forEach(function(m){
+    if(m.zid===me){ h+='<div class="msg me">'+esc(m.body)+'</div>'; }
+    else { h+='<div class="who">'+esc((m.name||m.zid).toUpperCase())+'</div>'+
+      '<div class="msg them">'+esc(m.body)+'</div>'; }
+  });
+  feed.innerHTML=h; feed.scrollTop=feed.scrollHeight;
+
+  document.getElementById('tickets').innerHTML = (t.windows||[]).map(function(w){
+    var loc = w.room && w.room!=='—'
+      ? esc(w.room)+' · <b>'+esc(w.bldg)+'</b> · seats '+w.seats+' · ~'+w.dist+'m'
+      : 'room TBC';
+    return '<div class="ticket" onclick="suggest(\''+esc(w.when)+'\',\''+esc(w.room)+'\')">'+
+      '<div><div class="when">'+esc(w.when)+'</div>'+
+      '<div class="where">'+loc+'</div></div><div class="pick">Suggest</div></div>';
+  }).join('') || '<div class="tag" style="margin:6px">No common free window found this week.</div>';
+}
+async function sendMsg(){
+  var el=document.getElementById('inp'); var v=el.value.trim();
+  if(!v) return; el.value='';
+  try{ S=await api('/api/thread/message',{body:v}); renderChat(); }
+  catch(e){ toast(e.message); }
+}
+function suggest(when,room){
+  var el=document.getElementById('inp');
+  el.value="Let's do "+when+(room&&room!=='—'?' — I’ll grab '+room:'')+'.';
+  sendMsg();
+}
+
+/* ---------- we met ---------- */
+function renderMet(){
+  var t=S.thread; if(!t){ show('home'); return; }
+  var me=S.user.zid;
+  document.getElementById('m-people').innerHTML = t.members
+    .filter(function(m){return m.zid!==me;})
+    .map(function(m){
+      return '<div class="addrow"><div class="pf">'+esc(initials(m.name))+'</div>'+
+        '<div class="nm"><b>'+esc(m.name)+'</b><span>'+esc(m.zid)+' · met just now</span></div>'+
+        '<button class="tog on" onclick="this.classList.toggle(\'on\')"></button></div>';
     }).join('');
-  }
-  renderTickets();
-
-  // When served by campusthread.server, swap the baked-in sample for the
-  // live matching + room-resolution pipeline. Opened as a bare file:// the
-  // fetch fails and the static fallback above stands — demo still works.
-  fetch('/api/thread').then(function(r){ return r.ok ? r.json() : null; })
-    .then(function(d){
-      if(!d || !d.windows || !d.windows.length) return;
-      WINDOWS = d.windows; renderTickets();
-      if(d.icebreaker){
-        var sys=document.querySelector('#feed .msg.sys');
-        if(sys) sys.textContent = d.icebreaker;
-      }
-    })
-    .catch(function(){ /* offline / file:// — keep the static fallback */ });
-
-  function addMsg(cls, who, text){
-    var feed = document.getElementById('feed');
-    if(who){ var w=document.createElement('div'); w.className='who'; w.textContent=who; feed.appendChild(w); }
-    var m=document.createElement('div'); m.className='msg '+cls; m.textContent=text;
-    feed.appendChild(m); m.scrollIntoView({behavior:'smooth',block:'end'});
-  }
-  function suggest(i){
-    var w=WINDOWS[i];
-    addMsg('me', null, "Let's do "+w.when.replace('·','at').trim()+" — I'll book "+w.room+".");
-    setTimeout(function(){ addMsg('them','JAMIE · LEE','perfect, see you both there ☕'); }, 700);
-  }
-  function send(){
-    var el=document.getElementById('inp'); var v=el.value.trim();
-    if(!v) return; addMsg('me',null,v); el.value='';
-  }
-
-  function confirmMet(){
-    document.getElementById('loopPreview').classList.remove('hide');
+  document.getElementById('loopPreview').classList.add('hide');
+  var b=document.getElementById('confirmMet');
+  b.disabled=false; b.textContent='Confirm'; b.style.background='';
+}
+async function confirmMet(){
+  var anyOn=!!document.querySelector('#m-people .tog.on');
+  try{
+    var d=await api('/api/we-met',{friend:anyOn}); S=d;
+    var fr=d.weMet.friendedNames||[];
+    var lp=document.getElementById('loopPreview');
+    lp.innerHTML='<div style="font-family:Inter,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ember-deep);margin:0 2px 12px">The thread feeds back</div>'+
+      '<div class="addcard" style="margin:0">'+
+      '<div class="addrow"><div style="font-size:20px">✕</div><div class="nm"><b>This pair won’t be re-threaded</b><span>you met — the loop is closed</span></div></div>'+
+      (fr.length?'<div class="addrow"><div style="font-size:20px">✦</div><div class="nm"><b>New friendships added</b><span>'+
+        fr.map(function(p){return esc(p.join(' & '));}).join(', ')+' — unlocks new intros</span></div></div>':'')+
+      '<div class="addrow"><div style="font-size:20px">★</div><div class="nm"><b>Re-run Sunday to see it change</b><span>met pairs are now excluded; new edges open new groups</span></div></div></div>';
+    lp.classList.remove('hide');
     var btn=document.getElementById('confirmMet');
-    btn.textContent='✓ Logged — Alex added';
-    btn.style.background='var(--ok)';
-    btn.disabled=true;
-    document.getElementById('loopPreview').scrollIntoView({behavior:'smooth',block:'center'});
-  }
+    btn.textContent='✓ Logged'; btn.style.background='var(--ok)'; btn.disabled=true;
+    lp.scrollIntoView({behavior:'smooth',block:'center'});
+  }catch(e){ toast(e.message); }
+}
 
-  // live countdown to the coming Friday, midnight (the soft deadline)
-  (function(){
-    var cd=document.getElementById('cd');
-    function nextFriMidnight(){
-      var n=new Date(); var d=new Date(n);
-      var add=(5 - n.getDay() + 7) % 7;            // Fri = day 5
-      d.setDate(n.getDate()+add); d.setHours(23,59,0,0);
-      if(d<=n) d.setDate(d.getDate()+7);
-      return d;
-    }
-    var target=nextFriMidnight();
-    function tick(){
-      var s=Math.max(0,(target-new Date())/1000);
-      var dd=Math.floor(s/86400), hh=Math.floor(s%86400/3600),
-          mm=Math.floor(s%3600/60), ss=Math.floor(s%60);
-      cd.textContent = s<=0 ? 'this thread has closed'
-        : 'closes in '+dd+'d '+hh+'h '+mm+'m '+ss+'s';
-    }
-    tick(); setInterval(tick,1000);
-  })();
+/* met screen needs its data when shown */
+var _show=show;
+show=function(v){ if(v==='met') renderMet(); _show(v); };
+
+/* boot */
+refresh().then(function(){ if(S&&S.user) afterState(); else show('auth'); });
 </script>

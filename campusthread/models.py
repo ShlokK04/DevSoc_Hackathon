@@ -137,6 +137,10 @@ class Match:
     # Filled in later by the room resolver (needs network); aligned 1:1 with
     # meetup_windows. The matcher never sets this — it stays network-free.
     room_suggestions: list[RoomSuggestion | None] = field(default_factory=list)
+    # "warm-intro" = via a mutual friend (connector). "open" = a cold-start
+    # group of friendless / missed-the-window users (no connector). Additive
+    # with a default, so existing matches and tests are unaffected.
+    kind: str = "warm-intro"
 
     def members(self) -> tuple[User, User, User]:
         return (self.connector, self.member_b, self.member_c)
