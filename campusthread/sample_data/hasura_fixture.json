@@ -1,0 +1,94 @@
+{
+  "courses": {
+    "COMP1531": "Software Engineering Fundamentals",
+    "COMP6080": "Web Front-End Programming",
+    "COMP2521": "Data Structures and Algorithms",
+    "COMP1521": "Computer Systems Fundamentals"
+  },
+  "buildings": [
+    {
+      "id": "K-J17",
+      "name": "Ainsworth Building",
+      "lat": -33.918215,
+      "long": 151.230300,
+      "aliases": ["Ainsworth", "J17"],
+      "rooms": [
+        {
+          "id": "K-J17-G03",
+          "name": "G03",
+          "abbr": "AINS-G03",
+          "school": "School of Mechanical Engineering",
+          "usage": "Lecture Theatre",
+          "capacity": 200,
+          "bookings": [
+            {
+              "name": "MECH1010 Lecture",
+              "bookingType": "Class",
+              "start": "2026-05-27T10:30:00+10:00",
+              "end": "2026-05-27T11:30:00+10:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K-K17",
+      "name": "K17 CSE Building",
+      "lat": -33.918700,
+      "long": 151.230300,
+      "aliases": ["K17", "CSE Building", "Computer Science"],
+      "rooms": [
+        {
+          "id": "K-K17-G01",
+          "name": "K17 G01",
+          "abbr": "K17-G01",
+          "school": "School of Computer Science and Engineering",
+          "usage": "Meeting Room",
+          "capacity": 12,
+          "bookings": []
+        },
+        {
+          "id": "K-K17-113",
+          "name": "113",
+          "abbr": "K17-113",
+          "school": "School of Computer Science and Engineering",
+          "usage": "Lecture Theatre",
+          "capacity": 350,
+          "bookings": [
+            {
+              "name": "COMP1521 Lecture",
+              "bookingType": "Class",
+              "start": "2026-05-27T09:00:00+10:00",
+              "end": "2026-05-27T18:00:00+10:00"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "K-E15",
+      "name": "Quadrangle",
+      "lat": -33.917400,
+      "long": 151.231140,
+      "aliases": ["Quad", "Quadrangle", "E15"],
+      "rooms": [
+        {
+          "id": "K-E15-G040",
+          "name": "G040",
+          "abbr": "QUAD-G040",
+          "school": "Faculty of Arts, Design and Architecture",
+          "usage": "Tutorial Room",
+          "capacity": 120,
+          "bookings": [
+            {
+              "name": "ARTS1000 Seminar",
+              "bookingType": "Class",
+              "start": "2026-05-27T11:00:00+10:00",
+              "end": "2026-05-27T13:00:00+10:00"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

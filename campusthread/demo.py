@@ -16,9 +16,17 @@ fixture so the whole pipeline (incl. rooms) is demonstrable either way.
 from __future__ import annotations
 
 import json
+import sys
 import tempfile
 from datetime import date
 from pathlib import Path
+
+# The demo prints box-drawing/arrow glyphs; Windows consoles default to a
+# legacy code page (cp1252) and would otherwise crash. Force UTF-8 output.
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):  # pragma: no cover - non-reconfigurable stream
+    pass
 
 from .feedback import FeedbackStore, apply_friend_adds
 from .hasuragres import HasuragresClient, HasuragresCoursesClient, _COURSE_QUERY

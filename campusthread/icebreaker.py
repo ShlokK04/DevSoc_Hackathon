@@ -1,0 +1,35 @@
+"""
+The auto-generated first message of a thread.
+
+A warm intro lands better than a cold one: name the mutual friend, name the
+thing they have in common, and hand them a concrete next step (a time and,
+if the room resolver has run, a place). No template that reads like a form —
+it should sound like the connector actually said it.
+"""
+
+from __future__ import annotations
+
+from .models import Match
+
+
+def generate_icebreaker(match: Match) -> str:
+    a = match.connector.name
+    b, c = match.member_b.name, match.member_c.name
+
+    common = (
+        f"you're both in {match.shared_faculty}"
+        if match.shared_faculty
+        else "you've somehow never crossed paths"
+    )
+
+    when = ""
+    if match.meetup_windows:
+        w = match.meetup_windows[0]
+        room = match.room_suggestions[0] if match.room_suggestions else None
+        where = f" at {room.room_name} ({room.building_name})" if room else ""
+        when = f" You're all free {w.label()}{where} — grab a coffee?"
+
+    return (
+        f"{b}, meet {c} — {c}, meet {b}. {a} reckons you two should know "
+        f"each other ({common}).{when}"
+    )

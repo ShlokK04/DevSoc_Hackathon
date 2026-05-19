@@ -359,9 +359,13 @@ def test_connector_reputation_breaks_ties():
     print("ok  proven-matchmaker nudge breaks an otherwise exact tie")
 
 
-def test_feedback_persists_to_json(tmp_path_str="/tmp/_ct_fb_test.json"):
+def test_feedback_persists_to_json(tmp_path_str=None):
+    import os
+    import tempfile
     from pathlib import Path
     from .feedback import FeedbackStore
+    if tmp_path_str is None:  # cross-platform: no hardcoded /tmp (breaks on Windows)
+        tmp_path_str = os.path.join(tempfile.gettempdir(), "_ct_fb_test.json")
     Path(tmp_path_str).unlink(missing_ok=True)
     s = FeedbackStore(tmp_path_str)
     a = _user("a", "A", [_ev(WED, 9, 11)], ["COMP1531"])
