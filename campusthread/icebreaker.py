@@ -13,13 +13,12 @@ from .models import Match
 
 
 def generate_icebreaker(match: Match) -> str:
-    a = match.connector.name
-    b, c = match.member_b.name, match.member_c.name
+    names = [m.name for m in match.members()]
 
     common = (
-        f"you're both in {match.shared_faculty}"
+        f"you're all in {match.shared_faculty}"
         if match.shared_faculty
-        else "you've somehow never crossed paths"
+        else "different corners of campus"
     )
 
     when = ""
@@ -29,7 +28,24 @@ def generate_icebreaker(match: Match) -> str:
         where = f" at {room.room_name} ({room.building_name})" if room else ""
         when = f" You're all free {w.label()}{where} — grab a coffee?"
 
+    if match.kind == "open":
+        # No mutual friend — a cold-start group (friendless / missed the
+        # window). Don't fake a connector; be honest and warm about it.
+        trio = ", ".join(names[:-1]) + f" & {names[-1]}"
+        return (
+            f"{trio} — none of you share a mutual friend yet, but you're all "
+            f"on campus the same day ({common}).{when} "
+            f"Everyone starts somewhere."
+        )
+
+    a = match.connector.name
+    b, c = match.member_b.name, match.member_c.name
+    pair_common = (
+        f"you're both in {match.shared_faculty}"
+        if match.shared_faculty
+        else "you've somehow never crossed paths"
+    )
     return (
         f"{b}, meet {c} — {c}, meet {b}. {a} reckons you two should know "
-        f"each other ({common}).{when}"
+        f"each other ({pair_common}).{when}"
     )

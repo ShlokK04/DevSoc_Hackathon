@@ -233,6 +233,73 @@ def run_weekly_matching(
     return matches
 
 
+def run_open_matching(
+    pool: dict[str, User],
+    courses: UnswCoursesClient,
+    week_start: date,
+    *,
+    group_size: int = 3,
+    max_pool: int = 60,
+) -> list[Match]:
+    """
+    Cold-start matching for users with **no warm path**.
+
+    `run_weekly_matching` needs a connector — a mutual friend. A student with
+    zero friends (a first-year, an international student who just arrived) can
+    never appear in a warm triplet, so they'd be invisible to it forever.
+    This groups *those* users with *each other* into trios, under the exact
+    same hard constraint: at least one shared on-campus day. Same ranking
+    shape (more shared days, then faculty cohesion, then total free time).
+
+    `pool` is the eligible set the caller curated — the friendless on the
+    Sunday run, or whoever is currently waiting after missing the window. We
+    only ever match within it, so a friendless student is never bundled into
+    a stranger's friend group, and vice versa. `connector` is just the
+    lowest-zID member for a stable identity; `kind="open"` records that there
+    was no real introducer (the icebreaker says so).
+    """
+    from itertools import combinations
+
+    ids = sorted(
+        z for z, u in pool.items() if not u.not_on_campus_this_week
+    )
+    # O(n^3) over the pool; the friendless/waiting set is small, but cap it
+    # defensively so a pathological input can't stall the Sunday job.
+    ids = ids[:max_pool]
+
+    scored: list[Match] = []
+    for trio in combinations(ids, group_size):
+        members = tuple(pool[i] for i in trio)
+        shared_days = _shared_campus_days(members, week_start)
+        if not shared_days:
+            continue  # SAME hard constraint as warm matching.
+        cluster, faculty = _faculty_cohesion(members, courses)
+        windows = _meetup_windows(members, shared_days)
+        score = (len(shared_days), cluster, 0, sum(w.minutes for w in windows))
+        scored.append(
+            Match(
+                connector=members[0],
+                member_b=members[1],
+                member_c=members[2],
+                shared_campus_days=shared_days,
+                shared_faculty=faculty,
+                meetup_windows=windows,
+                score=score,
+                kind="open",
+            )
+        )
+
+    scored.sort(key=lambda m: m.score, reverse=True)
+    used: set[str] = set()
+    out: list[Match] = []
+    for m in scored:
+        if m.member_zids() & used:
+            continue
+        out.append(m)
+        used |= m.member_zids()
+    return out
+
+
 def next_monday(today: date | None = None) -> date:
     """The Monday of the coming week (the Sunday-cron target window)."""
     today = today or date.today()

@@ -384,6 +384,65 @@ def test_feedback_persists_to_json(tmp_path_str=None):
     print("ok  feedback store persists to JSON and reloads intact")
 
 
+def test_open_matching_groups_only_friendless():
+    """Cold-start path: friendless users grouped together, same day rule."""
+    from .matching import run_open_matching
+    # Three friendless students sharing Wed; one sharing only Thu (excluded).
+    m = _user("m", "Mei", [_ev(WED, 9, 11)], ["COMP1511"])
+    o = _user("o", "Omar", [_ev(WED, 12, 14)], ["COMP1511"])
+    li = _user("li", "Lina", [_ev(WED, 15, 17)], ["COMP1511"])
+    lone = _user("x", "Lone", [_ev(THU, 9, 11)], ["COMP1511"])
+    pool = {u.zid: u for u in (m, o, li, lone)}
+    out = run_open_matching(pool, COURSES, WEEK)
+    assert len(out) == 1
+    assert out[0].kind == "open"
+    assert out[0].member_zids() == {"m", "o", "li"}      # Lone left out: no shared day
+    print("ok  open matching: friendless trio formed on a shared day")
+
+
+def test_open_matching_requires_shared_day():
+    from .matching import run_open_matching
+    a = _user("a", "A", [_ev(WED, 9, 11)], ["COMP1511"])
+    b = _user("b", "B", [_ev(WED, 12, 14)], ["COMP1511"])
+    c = _user("c", "C", [_ev(THU, 9, 11)], ["COMP1511"])   # no common day
+    assert run_open_matching({u.zid: u for u in (a, b, c)}, COURSES, WEEK) == []
+    print("ok  open matching: no shared on-campus day -> no group")
+
+
+def test_store_auth_friends_and_idempotent_week():
+    import os
+    import tempfile
+    from pathlib import Path
+    from datetime import date
+    from .store import Store, DbFeedback
+
+    p = os.path.join(tempfile.gettempdir(), "_ct_store_test.db")
+    Path(p).unlink(missing_ok=True)
+    s = Store(p)
+
+    s.register("Z1", "Ann", "secret1")
+    assert s.verify("z1", "secret1") and not s.verify("z1", "nope")
+    try:
+        s.register("z1", "Ann2", "secret1"); assert False
+    except ValueError:
+        pass                                            # duplicate rejected
+
+    s.register("z2", "Bo", "secret1")
+    s.send_request("z1", "z2")
+    assert s.outgoing_requests("z1") == ["z2"]
+    s.send_request("z2", "z1")                           # reciprocal -> auto-accept
+    assert "z2" in s.friends("z1") and "z1" in s.friends("z2")
+
+    w = date(2026, 5, 25)
+    s.record_introductions([("z1", "z2", "z3", "warm-intro")], w)
+    s.record_introductions([("z1", "z2", "z3", "warm-intro")], w)  # idempotent
+    assert len(DbFeedback(s)._intros()) == 1
+    s.mark_met("z2", "z3", w, friended=False)
+    assert DbFeedback(s).met_pairs() == {frozenset(("z2", "z3"))}
+    Path(p).unlink(missing_ok=True)
+    print("ok  store: hashed auth, reciprocal friend, idempotent intros")
+
+
 def run_all():
     for name, fn in sorted(globals().items()):
         if name.startswith("test_") and callable(fn):

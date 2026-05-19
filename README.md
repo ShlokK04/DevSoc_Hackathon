@@ -6,10 +6,44 @@ the **real DevSoc Hasuragres GraphQL API**.
 ## Run it
 
 ```bash
-python -m campusthread.demo     # matching + rooms + the We-met loop
-python -m campusthread.tests    # 19 invariant + integration tests
-open campusthread/ui/groupchat.html   # the groupchat UI (any browser)
+python -m campusthread.server   # the full web app  →  http://127.0.0.1:8000
+python -m campusthread.demo     # CLI: matching + rooms + the We-met loop
+python -m campusthread.tests    # 21 invariant + integration tests
 ```
+
+### The web app (`campusthread.server`)
+
+A real multi-user application — stdlib only (`http.server` + `sqlite3`),
+no Flask, no Docker. On first start it seeds demo accounts (all passwords
+`password`) and prints them:
+
+* **Warm cluster** — `z1` Jamie, `z2` Alex, `z3` Sam, `z4` Dev (timetables +
+  friendships from the original story).
+* **Friendless** — `z5` Mei, `z6` Omar, `z7` Lina: no social graph at all
+  (e.g. just-arrived international students).
+
+Log in, **Run Sunday matching**, and open the group chat. Everything the
+browser shows comes from the API — there is no hardcoded data on the client.
+What's implemented end-to-end:
+
+| Feature | Where |
+|---|---|
+| Register / login / logout, hashed passwords, server sessions | `store.py`, `server.py` |
+| Upload your real timetable (`.ics`) — parsed & stored | `ics_parser.py` → SQLite |
+| Friend **requests** (send / accept / decline); reciprocal auto-accept | `store.py` |
+| Sunday 7 pm run — warm intros **+** a cold-start pass; idempotent | `matching.run_weekly_matching` / `run_open_matching` |
+| **Friendless / missed-the-window** users get their own homepage and a "Find me a group now" pool — matched only with others in the same situation, same shared-on-campus-day rule | `run_open_matching`, `/api/join-now` |
+| Live group chat with persisted messages | `messages` table |
+| "We met" → marks the pair, optionally friends them, mutating the graph | `store.complete_thread` |
+
+Persistence is a real SQLite database (`campusthread/campusthread.db`):
+every write is one locked, atomic transaction, and the weekly job is
+idempotent via a `UNIQUE` constraint — the durability gaps the JSON
+`FeedbackStore` had. The matcher is **unchanged**: `DbFeedback` adapts the
+database to the exact interface `run_weekly_matching` expects (the same
+Protocol-seam idea as the courses client).
+
+Delete `campusthread/campusthread.db` to reset to a fresh seeded world.
 
 ## The real UNSW API (important — read this)
 
