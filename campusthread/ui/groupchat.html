@@ -321,16 +321,30 @@
   }
 
   // render meetup "tickets"
-  (function(){
-    var html = WINDOWS.map(function(w,i){
+  function renderTickets(){
+    document.getElementById('tickets').innerHTML = WINDOWS.map(function(w,i){
       return '<div class="ticket" onclick="suggest('+i+')">'+
         '<div><div class="when">'+w.when+'</div>'+
         '<div class="where">'+w.room+' · <b>'+w.bldg+'</b> · seats '+w.seats+
         ' · ~'+w.dist+'m away</div></div>'+
         '<div class="pick">Suggest</div></div>';
     }).join('');
-    document.getElementById('tickets').innerHTML = html;
-  })();
+  }
+  renderTickets();
+
+  // When served by campusthread.server, swap the baked-in sample for the
+  // live matching + room-resolution pipeline. Opened as a bare file:// the
+  // fetch fails and the static fallback above stands — demo still works.
+  fetch('/api/thread').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d || !d.windows || !d.windows.length) return;
+      WINDOWS = d.windows; renderTickets();
+      if(d.icebreaker){
+        var sys=document.querySelector('#feed .msg.sys');
+        if(sys) sys.textContent = d.icebreaker;
+      }
+    })
+    .catch(function(){ /* offline / file:// — keep the static fallback */ });
 
   function addMsg(cls, who, text){
     var feed = document.getElementById('feed');
