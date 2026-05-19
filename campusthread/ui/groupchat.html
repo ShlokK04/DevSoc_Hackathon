@@ -1,0 +1,399 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CampusThread</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800;0,14..32,900;1,14..32,400;1,14..32,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* UNSW brand palette — Yellow #FFDB00 + Black on clean white */
+    --paper:#ffffff; --paper-2:#f4f4f4; --ink:#000000; --ink-soft:#5a5a5a;
+    --ember:#ffdb00; --ember-2:#e6c500; --ember-deep:#000000; --thread:#000000;
+    --line:#dcdcdc; --card:#f7f7f7; --gold:#ffdb00;
+    --ok:#ffdb00;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;color:var(--ink);
+    background:
+      radial-gradient(120% 90% at 12% 0%, #ffe94d 0%, transparent 42%),
+      radial-gradient(120% 110% at 100% 100%, #f0f0f0 0%, transparent 55%),
+      var(--paper-2);
+    min-height:100%;display:flex;align-items:center;justify-content:center;
+    padding:32px 16px;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* subtle grain — kept very faint for a clean UNSW look */
+  body::before{
+    content:"";position:fixed;inset:0;pointer-events:none;opacity:.08;mix-blend-mode:multiply;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.35'/></svg>");
+  }
+
+  .phone{
+    position:relative;width:404px;max-width:100%;height:812px;max-height:92vh;
+    background:var(--paper);border-radius:46px;
+    box-shadow:0 2px 0 #fff inset,0 40px 80px -28px rgba(0,0,0,.35),
+               0 0 0 1px rgba(0,0,0,.12);
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .phone::after{ /* edge vignette */
+    content:"";position:absolute;inset:0;border-radius:46px;pointer-events:none;
+    box-shadow:0 0 90px rgba(0,0,0,.10) inset;
+  }
+  .notch{position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:148px;height:26px;background:var(--ink);border-radius:0 0 18px 18px;z-index:30;opacity:.92}
+
+  .screen{flex:1;overflow-y:auto;overflow-x:hidden;position:relative}
+  .screen::-webkit-scrollbar{width:0}
+
+  .wrap{padding:62px 26px 30px}
+  .kicker{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:11px;letter-spacing:.22em;
+    text-transform:uppercase;color:var(--ember-deep)}
+  h1{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:900;font-size:42px;line-height:1.04;
+    letter-spacing:-.03em;margin:10px 0 0}
+  h1 em{font-style:normal;font-weight:900;color:var(--ink);
+    background:linear-gradient(transparent 58%, var(--ember) 58%, var(--ember) 94%, transparent 94%);
+    padding:0 .06em}
+  .lede{font-size:17px;line-height:1.5;color:var(--ink-soft);margin-top:14px;max-width:30ch}
+
+  /* ---- the thread of three ---- */
+  .thread-stage{position:relative;height:236px;margin:26px 0 10px}
+  .thread-stage svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+  .node{position:absolute;width:72px;height:72px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:600;font-size:24px;color:var(--paper);
+    box-shadow:0 10px 22px -10px rgba(60,30,10,.6),0 0 0 4px var(--paper),0 0 0 5px var(--line);
+    transform:scale(0);animation:pop .6s cubic-bezier(.2,1.3,.4,1) forwards}
+  .node small{position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:11px;letter-spacing:.04em;
+    color:var(--ink-soft);white-space:nowrap}
+  .node.a{top:6px;left:50%;margin-left:-36px;color:var(--ink);
+    background:linear-gradient(150deg,#ffe23d,#ffce00);animation-delay:.15s}
+  .node.b{bottom:14px;left:34px;background:linear-gradient(150deg,#3a3a3a,#000);animation-delay:.95s}
+  .node.c{bottom:14px;right:34px;background:linear-gradient(150deg,#3a3a3a,#000);animation-delay:1.05s}
+  .node.a small{color:var(--ink);font-weight:700}
+  @keyframes pop{to{transform:scale(1)}}
+  .stitch{stroke:var(--thread);stroke-width:2.4;fill:none;
+    stroke-dasharray:6 5;stroke-linecap:round;
+    stroke-dashoffset:520;animation:draw 1.5s ease .35s forwards;opacity:.85}
+  @keyframes draw{to{stroke-dashoffset:0}}
+
+  .seal{display:flex;align-items:center;gap:10px;margin:30px 0 4px;
+    opacity:0;animation:rise .7s ease 1.5s forwards}
+  .seal .dot{width:9px;height:9px;border-radius:50%;background:var(--ember);
+    box-shadow:0 0 0 5px rgba(255,219,0,.30)}
+  .seal span{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:12px;letter-spacing:.06em;color:var(--ink-soft)}
+
+  .cta{display:block;width:100%;margin-top:26px;border:0;cursor:pointer;
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:700;font-size:17px;color:var(--ink);
+    background:var(--ember);padding:17px;border-radius:12px;letter-spacing:-.01em;
+    box-shadow:0 14px 26px -16px rgba(0,0,0,.45);
+    transition:transform .18s ease,background .2s ease;
+    opacity:0;animation:rise .7s ease 1.75s forwards}
+  .cta:hover{transform:translateY(-2px);background:var(--ember-2)}
+  .cta.ghost{background:transparent;color:var(--ink);box-shadow:none;
+    border:1.5px solid var(--ink);font-weight:600;animation-delay:1.85s}
+  .cta.ghost:hover{background:var(--ink);color:var(--paper)}
+  @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  /* ---- chat ---- */
+  .chead{position:sticky;top:0;z-index:20;background:linear-gradient(var(--paper),var(--paper) 70%,rgba(255,255,255,0));
+    padding:54px 22px 14px;border-bottom:1px solid var(--line)}
+  .chead .row{display:flex;align-items:center;justify-content:space-between}
+  .back{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:12px;color:var(--ink-soft);
+    background:none;border:0;cursor:pointer;letter-spacing:.08em}
+  .avs{display:flex}
+  .avs i{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-style:normal;font-size:13px;color:var(--paper);
+    box-shadow:0 0 0 2.5px var(--paper);margin-left:-9px}
+  .title{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:600;font-size:21px;margin:12px 0 3px}
+  .countdown{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:12px;letter-spacing:.05em;
+    color:var(--ember-deep);display:flex;align-items:center;gap:7px}
+  .countdown .pulse{width:7px;height:7px;border-radius:50%;background:var(--ember);
+    animation:beat 1.6s ease-in-out infinite}
+  @keyframes beat{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.35;transform:scale(.7)}}
+
+  .feed{padding:20px 20px 8px;display:flex;flex-direction:column;gap:14px}
+  .msg{max-width:82%;font-size:15.5px;line-height:1.46;padding:12px 15px;border-radius:16px;
+    animation:bubble .5s ease both}
+  @keyframes bubble{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .msg.sys{align-self:center;max-width:90%;background:var(--card);border:1px solid var(--line);
+    color:var(--ink);text-align:center;border-radius:14px;font-size:15px}
+  .msg.sys b{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:600;color:var(--ember-deep)}
+  .msg.them{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:5px}
+  .msg.me{align-self:flex-end;background:var(--ink);color:var(--paper);border-bottom-right-radius:5px}
+  .who{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:10.5px;letter-spacing:.08em;
+    color:var(--ink-soft);margin:0 6px 4px;align-self:flex-start}
+
+  .windows{padding:6px 18px 4px}
+  .wlabel{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;color:var(--ink-soft);margin:14px 6px 10px}
+  .ticket{position:relative;background:var(--card);border:1px solid var(--line);
+    border-radius:14px;padding:14px 16px;margin-bottom:10px;cursor:pointer;
+    display:flex;align-items:center;justify-content:space-between;gap:12px;
+    transition:transform .16s ease,border-color .2s ease,box-shadow .2s ease}
+  .ticket:hover{transform:translateY(-2px);border-color:var(--ink);
+    box-shadow:0 12px 22px -16px rgba(0,0,0,.45)}
+  .ticket::before,.ticket::after{content:"";position:absolute;width:13px;height:13px;
+    background:var(--paper);border-radius:50%;top:50%;transform:translateY(-50%)}
+  .ticket::before{left:-7px}.ticket::after{right:-7px}
+  .ticket .when{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:600;font-size:17px}
+  .ticket .where{font-size:13.5px;color:var(--ink-soft);margin-top:3px}
+  .ticket .where b{color:var(--ember-deep);font-weight:500}
+  .ticket .pick{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:11px;font-weight:700;
+    letter-spacing:.06em;text-transform:uppercase;
+    color:var(--ink);background:var(--ember);border:0;border-radius:999px;
+    padding:8px 13px;white-space:nowrap}
+
+  .composer{position:sticky;bottom:0;background:var(--paper);
+    border-top:1px solid var(--line);padding:12px 16px 18px;display:flex;gap:10px;align-items:center}
+  .composer input{flex:1;border:1px solid var(--line);background:#fff;border-radius:999px;
+    padding:12px 16px;font-family:"Inter",system-ui,sans-serif;font-size:15px;color:var(--ink);outline:none}
+  .composer input:focus{border-color:var(--ember)}
+  .composer button{border:0;background:var(--ink);color:var(--paper);width:42px;height:42px;
+    border-radius:50%;cursor:pointer;font-size:17px;transition:background .2s}
+  .composer button:hover{background:var(--ember-deep)}
+
+  .metbar{padding:0 18px 8px}
+  .metbtn{width:100%;border:1.5px solid var(--ink);background:var(--ember);
+    color:var(--ink);font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:700;font-size:15.5px;
+    padding:13px;border-radius:12px;cursor:pointer;transition:background .2s,transform .16s}
+  .metbtn:hover{background:var(--ember-2);transform:translateY(-1px)}
+
+  /* ---- we met ---- */
+  .met-wrap{padding:64px 28px 30px;text-align:center}
+  .check{width:74px;height:74px;border-radius:50%;margin:6px auto 0;
+    background:linear-gradient(150deg,#ffe23d,#ffce00);display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 0 6px var(--paper),0 0 0 7px var(--ink),0 16px 30px -14px rgba(0,0,0,.45);
+    animation:pop .6s cubic-bezier(.2,1.3,.4,1)}
+  .check svg{width:34px;height:34px;stroke:#000;stroke-width:3;fill:none;
+    stroke-dasharray:40;stroke-dashoffset:40;animation:draw .6s ease .3s forwards}
+  .met-wrap h2{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:900;font-size:30px;margin:22px 0 8px;letter-spacing:-.02em}
+  .met-wrap p{color:var(--ink-soft);font-size:16px;line-height:1.5;max-width:28ch;margin:0 auto}
+
+  .addcard{background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:8px 6px;margin:26px 0 6px;text-align:left}
+  .addrow{display:flex;align-items:center;gap:13px;padding:13px 14px}
+  .addrow + .addrow{border-top:1px solid var(--line)}
+  .addrow .pf{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:16px;color:var(--paper);
+    background:linear-gradient(150deg,#3a3a3a,#000)}
+  .addrow .nm{flex:1}
+  .addrow .nm b{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-weight:600;font-size:16px;display:block}
+  .addrow .nm span{font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-size:11px;color:var(--ink-soft)}
+  .tog{width:50px;height:29px;border-radius:999px;background:var(--line);border:0;cursor:pointer;
+    position:relative;transition:background .25s;flex:none}
+  .tog::after{content:"";position:absolute;top:3px;left:3px;width:23px;height:23px;border-radius:50%;
+    background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.25);transition:transform .25s}
+  .tog.on{background:var(--ember)}
+  .tog.on::after{transform:translateX(21px)}
+
+  .closer{margin-top:30px;font-family:"Inter",system-ui,-apple-system,Segoe UI,Arial,sans-serif;font-style:italic;font-weight:500;
+    font-size:18px;line-height:1.45;color:var(--ink);opacity:0;animation:rise .8s ease .5s forwards}
+  .hide{display:none!important}
+</style>
+
+<div class="phone">
+  <div class="notch"></div>
+
+  <!-- ============ SCREEN 1 — THE THREAD OPENED ============ -->
+  <section class="screen" id="s-notify">
+    <div class="wrap">
+      <div class="kicker">Sunday · 7:00 pm</div>
+      <h1>A thread<br><em>just opened.</em></h1>
+      <p class="lede">Someone you both know thought you two should finally meet.</p>
+
+      <div class="thread-stage">
+        <svg viewBox="0 0 352 236" preserveAspectRatio="none">
+          <path class="stitch" d="M176 44 C 120 96, 92 150, 70 188" />
+          <path class="stitch" d="M176 44 C 232 96, 260 150, 282 188" style="animation-delay:.55s"/>
+          <path class="stitch" d="M70 196 C 130 224, 222 224, 282 196" style="animation-delay:1.15s;opacity:.5"/>
+        </svg>
+        <div class="node a">JL<small>Jamie — knows you both</small></div>
+        <div class="node b">AN<small>Alex</small></div>
+        <div class="node c">SP<small>Sam (you)</small></div>
+      </div>
+
+      <div class="seal"><span class="dot"></span><span>Validated on campus together &nbsp;·&nbsp; Wed 27 May</span></div>
+
+      <button class="cta" onclick="go('chat')">Open the chat</button>
+      <button class="cta ghost" onclick="alert('Opted out — no thread for you next week. Toggle back anytime in Settings.')">Not on campus this week</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 2 — THE GROUPCHAT ============ -->
+  <section class="screen hide" id="s-chat">
+    <div class="chead">
+      <div class="row">
+        <button class="back" onclick="go('notify')">‹ THREAD</button>
+        <div class="avs">
+          <i style="background:linear-gradient(150deg,#ffe23d,#ffce00);color:#000">JL</i>
+          <i style="background:linear-gradient(150deg,#3a3a3a,#000)">AN</i>
+          <i style="background:linear-gradient(150deg,#8a8a8a,#555)">SP</i>
+        </div>
+      </div>
+      <div class="title">Jamie · Alex · you</div>
+      <div class="countdown"><span class="pulse"></span><span id="cd">expires Friday midnight</span></div>
+    </div>
+
+    <div class="feed" id="feed">
+      <div class="msg sys">
+        Hey — <b>Jamie</b> knows both of you. You're both in <b>Engineering</b>
+        and you're all on campus <b>Wednesday</b>. You've got until Friday —
+        maybe grab a coffee?
+      </div>
+      <div class="who">ALEX · NGUYEN</div>
+      <div class="msg them">oh hey! Jamie's mentioned you 😄 I'm free between classes Wed</div>
+    </div>
+
+    <div class="windows">
+      <div class="wlabel">Three windows you're all free &amp; on campus</div>
+      <div id="tickets"></div>
+    </div>
+
+    <div class="metbar">
+      <button class="metbtn" onclick="go('met')">✓ &nbsp;We met</button>
+    </div>
+
+    <div class="composer">
+      <input id="inp" placeholder="Message the thread…" onkeydown="if(event.key==='Enter')send()">
+      <button onclick="send()">↑</button>
+    </div>
+  </section>
+
+  <!-- ============ SCREEN 3 — WE MET ============ -->
+  <section class="screen hide" id="s-met">
+    <div class="met-wrap">
+      <div class="check"><svg viewBox="0 0 24 24"><path d="M4 12.5l5 5L20 6.5"/></svg></div>
+      <h2>You actually met.</h2>
+      <p>That's the whole point. Keep the people worth keeping.</p>
+
+      <div class="addcard">
+        <div class="addrow">
+          <div class="pf" style="background:linear-gradient(150deg,#ffe23d,#ffce00);color:#000">JL</div>
+          <div class="nm"><b>Jamie Lee</b><span>z5100001 · already friends</span></div>
+          <button class="tog on" disabled style="opacity:.5"></button>
+        </div>
+        <div class="addrow">
+          <div class="pf">AN</div>
+          <div class="nm"><b>Alex Nguyen</b><span>z5100002 · met just now</span></div>
+          <button class="tog on" onclick="this.classList.toggle('on')"></button>
+        </div>
+      </div>
+      <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;letter-spacing:.06em;color:var(--ink-soft);margin:6px 4px 0;text-align:left">
+        Adding Alex feeds back into next week's match quality.
+      </div>
+
+      <button class="cta" style="animation:none;opacity:1;margin-top:24px" id="confirmMet" onclick="confirmMet()">Confirm — and see what changes</button>
+
+      <div id="loopPreview" class="hide" style="margin-top:24px;text-align:left">
+        <div style="font-family:'Inter',system-ui,sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ember-deep);margin:0 2px 12px">Next Sunday · the thread feeds back</div>
+        <div class="addcard" style="margin:0">
+          <div class="addrow"><div style="font-size:20px">✕</div>
+            <div class="nm"><b>You &amp; Alex won't be re-threaded</b>
+            <span>you've met — the loop is closed</span></div></div>
+          <div class="addrow"><div style="font-size:20px">✦</div>
+            <div class="nm"><b>Alex can now introduce you to Dev</b>
+            <span>a person you had no path to before</span></div></div>
+          <div class="addrow"><div style="font-size:20px">★</div>
+            <div class="nm"><b>Jamie is a proven matchmaker</b>
+            <span>1 successful intro — a tie-break nudge for future threads</span></div></div>
+        </div>
+      </div>
+
+      <button class="cta" style="animation:none;opacity:1;margin-top:14px;background:transparent;color:var(--ink);border:1.5px solid var(--line);box-shadow:none" onclick="go('notify')">Back to threads</button>
+
+      <div class="closer">“One real meetup between two people who<br>would never have otherwise met.”</div>
+    </div>
+  </section>
+</div>
+
+<script>
+  // Output of the matching + room-resolution pipeline (Jamie ▸ Alex ▸ Sam,
+  // week of Mon 25 May 2026). Mirrors demo.py exactly.
+  var WINDOWS = [
+    { when:"Wed · 11:00–12:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 },
+    { when:"Wed · 14:00–15:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 },
+    { when:"Wed · 17:00–18:00", room:"K17 G01", bldg:"K17 CSE Building", seats:12, dist:36 }
+  ];
+
+  function go(id){
+    ['notify','chat','met'].forEach(function(s){
+      document.getElementById('s-'+s).classList.toggle('hide', s!==id);
+    });
+    document.getElementById('s-'+id).scrollTop = 0;
+  }
+
+  // render meetup "tickets"
+  function renderTickets(){
+    document.getElementById('tickets').innerHTML = WINDOWS.map(function(w,i){
+      return '<div class="ticket" onclick="suggest('+i+')">'+
+        '<div><div class="when">'+w.when+'</div>'+
+        '<div class="where">'+w.room+' · <b>'+w.bldg+'</b> · seats '+w.seats+
+        ' · ~'+w.dist+'m away</div></div>'+
+        '<div class="pick">Suggest</div></div>';
+    }).join('');
+  }
+  renderTickets();
+
+  // When served by campusthread.server, swap the baked-in sample for the
+  // live matching + room-resolution pipeline. Opened as a bare file:// the
+  // fetch fails and the static fallback above stands — demo still works.
+  fetch('/api/thread').then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d || !d.windows || !d.windows.length) return;
+      WINDOWS = d.windows; renderTickets();
+      if(d.icebreaker){
+        var sys=document.querySelector('#feed .msg.sys');
+        if(sys) sys.textContent = d.icebreaker;
+      }
+    })
+    .catch(function(){ /* offline / file:// — keep the static fallback */ });
+
+  function addMsg(cls, who, text){
+    var feed = document.getElementById('feed');
+    if(who){ var w=document.createElement('div'); w.className='who'; w.textContent=who; feed.appendChild(w); }
+    var m=document.createElement('div'); m.className='msg '+cls; m.textContent=text;
+    feed.appendChild(m); m.scrollIntoView({behavior:'smooth',block:'end'});
+  }
+  function suggest(i){
+    var w=WINDOWS[i];
+    addMsg('me', null, "Let's do "+w.when.replace('·','at').trim()+" — I'll book "+w.room+".");
+    setTimeout(function(){ addMsg('them','JAMIE · LEE','perfect, see you both there ☕'); }, 700);
+  }
+  function send(){
+    var el=document.getElementById('inp'); var v=el.value.trim();
+    if(!v) return; addMsg('me',null,v); el.value='';
+  }
+
+  function confirmMet(){
+    document.getElementById('loopPreview').classList.remove('hide');
+    var btn=document.getElementById('confirmMet');
+    btn.textContent='✓ Logged — Alex added';
+    btn.style.background='var(--ok)';
+    btn.disabled=true;
+    document.getElementById('loopPreview').scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  // live countdown to the coming Friday, midnight (the soft deadline)
+  (function(){
+    var cd=document.getElementById('cd');
+    function nextFriMidnight(){
+      var n=new Date(); var d=new Date(n);
+      var add=(5 - n.getDay() + 7) % 7;            // Fri = day 5
+      d.setDate(n.getDate()+add); d.setHours(23,59,0,0);
+      if(d<=n) d.setDate(d.getDate()+7);
+      return d;
+    }
+    var target=nextFriMidnight();
+    function tick(){
+      var s=Math.max(0,(target-new Date())/1000);
+      var dd=Math.floor(s/86400), hh=Math.floor(s%86400/3600),
+          mm=Math.floor(s%3600/60), ss=Math.floor(s%60);
+      cd.textContent = s<=0 ? 'this thread has closed'
+        : 'closes in '+dd+'d '+hh+'h '+mm+'m '+ss+'s';
+    }
+    tick(); setInterval(tick,1000);
+  })();
+</script>

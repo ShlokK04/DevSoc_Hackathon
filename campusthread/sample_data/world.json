@@ -1,0 +1,13 @@
+{
+  "users": [
+    { "zid": "z1", "name": "Jamie", "course_codes": ["COMP1531"], "ics": "jamie.ics" },
+    { "zid": "z2", "name": "Alex",  "course_codes": ["COMP6080"], "ics": "alex.ics" },
+    { "zid": "z3", "name": "Sam",   "course_codes": ["COMP2521"], "ics": "sam.ics" },
+    { "zid": "z4", "name": "Dev",   "course_codes": ["COMP1521"], "ics": "dev.ics" }
+  ],
+  "friendships": [
+    ["z1", "z2"],
+    ["z1", "z3"],
+    ["z2", "z4"]
+  ]
+}
